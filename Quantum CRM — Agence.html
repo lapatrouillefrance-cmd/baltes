@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Quantum CRM — Agence</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{
+  --night:#08100A; --deep:#0D1C12; --forest:#162B1C; --pine:#1E4028; --sage:#4A8A5C; --mist:#8DC4A0;
+  --gold:#C9A84C; --gold-b:#E8C96A; --cyan:#00E5FF; --rose:#F43F5E; --amber:#F59E0B; --emerald:#10B981; --violet:#A78BFA;
+  --white:#F4F8F4; --stone:#8FA394; --line:rgba(255,255,255,.09); --glass:rgba(255,255,255,.04); --r:12px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--night);color:var(--white);font:15px/1.5 'DM Sans',system-ui,sans-serif;min-height:100vh}
+h1,h2{font-family:'Playfair Display',Georgia,serif;font-weight:700}
+button,input,select,textarea{font:inherit;color:inherit}
+.hidden{display:none!important}
+a{color:var(--gold-b)}
+
+/* login */
+.auth{min-height:100vh;display:grid;place-items:center;padding:16px}
+.card{background:var(--deep);border:1px solid var(--line);border-radius:18px;padding:32px;width:100%;max-width:400px}
+.brand{display:flex;align-items:center;gap:10px;margin-bottom:22px}
+.logo{width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,var(--gold),var(--gold-b));display:grid;place-items:center;color:var(--night);font-weight:700;font-family:'Playfair Display',serif;font-size:20px}
+.brand b{font-size:18px}.brand span{color:var(--stone);font-size:13px;display:block}
+label{display:block;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--stone);margin:14px 0 6px}
+input,select,textarea{width:100%;background:var(--forest);border:1px solid var(--line);border-radius:10px;padding:10px 12px;outline:none}
+input:focus,select:focus,textarea:focus{border-color:var(--gold)}
+.btn{border:0;border-radius:10px;padding:11px 16px;cursor:pointer;font-weight:700;background:var(--gold);color:var(--night);transition:.15s}
+.btn:hover{background:var(--gold-b)}
+.btn.ghost{background:transparent;color:var(--white);border:1px solid var(--line);font-weight:500}
+.btn.ghost:hover{border-color:var(--gold)}
+.btn.sm{padding:7px 12px;font-size:13px}
+.btn:disabled{opacity:.5;cursor:default}
+.wide{width:100%;margin-top:18px}
+.links{display:flex;justify-content:space-between;margin-top:14px;font-size:13px}
+.links button{background:none;border:0;color:var(--mist);cursor:pointer;text-decoration:underline}
+.msg{margin-top:14px;font-size:14px;padding:10px 12px;border-radius:10px;background:var(--glass)}
+.msg.err{color:#fda4af;background:rgba(244,63,94,.1)} .msg.ok{color:#6ee7b7;background:rgba(16,185,129,.1)}
+
+/* app */
+header{position:sticky;top:0;z-index:5;background:rgba(8,16,10,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.bar{max-width:1400px;margin:0 auto;padding:12px 16px;display:flex;align-items:center;gap:12px}
+.bar .brand{margin:0;flex:1}
+.who{color:var(--stone);font-size:13px}
+main{max-width:1400px;margin:0 auto;padding:20px 16px 60px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:18px}
+.kpi{background:var(--deep);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px}
+.kpi small{color:var(--stone);font-size:12px;text-transform:uppercase;letter-spacing:.06em}
+.kpi b{display:block;font-size:28px;margin-top:4px;font-family:'Playfair Display',serif}
+.kpi.gold b{color:var(--gold-b)}
+.pipe{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
+.chip{border:1px solid var(--line);background:var(--glass);border-radius:999px;padding:6px 12px;font-size:13px;cursor:pointer}
+.chip.on{border-color:var(--gold);color:var(--gold-b)}
+.chip i{font-style:normal;opacity:.7;margin-left:4px}
+.filters{display:grid;grid-template-columns:2fr repeat(4,1fr) auto;gap:10px;margin-bottom:14px}
+.tablewrap{background:var(--deep);border:1px solid var(--line);border-radius:var(--r);overflow:auto}
+table{width:100%;border-collapse:collapse;min-width:900px}
+th{position:sticky;top:0;background:var(--forest);text-align:left;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--stone);padding:10px 12px;font-weight:500}
+td{padding:11px 12px;border-top:1px solid var(--line);vertical-align:top;font-size:14px}
+tr.row{cursor:pointer} tr.row:hover td{background:rgba(201,168,76,.06)}
+td .sub{color:var(--stone);font-size:12px}
+.pill{display:inline-block;border-radius:999px;padding:2px 10px;font-size:12px;font-weight:700;white-space:nowrap}
+.s-new{background:rgba(0,229,255,.12);color:var(--cyan)}
+.s-contacted{background:rgba(245,158,11,.14);color:var(--amber)}
+.s-qualified{background:rgba(167,139,250,.15);color:var(--violet)}
+.s-closed{background:rgba(16,185,129,.14);color:var(--emerald)}
+.late{color:var(--rose);font-weight:700}
+.empty{padding:40px;text-align:center;color:var(--stone)}
+.flag{font-size:12px;border:1px solid var(--line);border-radius:6px;padding:1px 6px}
+
+/* drawer */
+.shade{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:min(520px,100%);background:var(--deep);border-left:1px solid var(--line);z-index:10;overflow-y:auto;padding:22px}
+.drawer h2{font-size:24px;margin-bottom:2px;word-break:break-word}
+.dhead{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+.x{background:none;border:0;font-size:26px;cursor:pointer;color:var(--stone);line-height:1}
+.facts{display:grid;grid-template-columns:120px 1fr;gap:6px 12px;margin:16px 0;font-size:14px}
+.facts dt{color:var(--stone)} .facts dd{word-break:break-word}
+.message{background:var(--forest);border-radius:10px;padding:12px;white-space:pre-wrap;font-size:14px;word-break:break-word}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+textarea{min-height:120px;resize:vertical}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--emerald);color:var(--night);font-weight:700;padding:10px 18px;border-radius:999px;z-index:20}
+@media (max-width:860px){.filters{grid-template-columns:1fr 1fr}.filters input{grid-column:1/-1}.who{display:none}}
+</style>
+</head>
+<body>
+
+<!-- ═══════════ LOGIN ═══════════ -->
+<section id="auth" class="auth hidden">
+  <div class="card">
+    <div class="brand"><div class="logo">Q</div><div><b>Quantum CRM</b><span>Espace agence — accès réservé</span></div></div>
+
+    <form id="f-login">
+      <label for="l-email">E-mail</label>
+      <input id="l-email" type="email" autocomplete="username" required>
+      <label for="l-pass">Mot de passe</label>
+      <input id="l-pass" type="password" autocomplete="current-password" minlength="8" required>
+      <button class="btn wide" type="submit">Se connecter</button>
+      <div class="links">
+        <button type="button" id="go-signup">Première connexion ?</button>
+        <button type="button" id="go-reset">Mot de passe oublié</button>
+      </div>
+    </form>
+
+    <form id="f-signup" class="hidden">
+      <p style="color:var(--stone);font-size:14px">Crée ton mot de passe (8 caractères minimum). Tu recevras un e-mail de confirmation : clique sur le lien, puis reviens ici pour te connecter.</p>
+      <label for="s-email">E-mail</label>
+      <input id="s-email" type="email" autocomplete="username" required>
+      <label for="s-pass">Nouveau mot de passe</label>
+      <input id="s-pass" type="password" autocomplete="new-password" minlength="8" required>
+      <button class="btn wide" type="submit">Créer mon accès</button>
+      <div class="links"><button type="button" class="go-login">← Retour</button></div>
+    </form>
+
+    <form id="f-reset" class="hidden">
+      <p style="color:var(--stone);font-size:14px">Tu vas recevoir un e-mail avec un lien pour choisir un nouveau mot de passe.</p>
+      <label for="r-email">E-mail</label>
+      <input id="r-email" type="email" required>
+      <button class="btn wide" type="submit">Envoyer le lien</button>
+      <div class="links"><button type="button" class="go-login">← Retour</button></div>
+    </form>
+
+    <form id="f-newpass" class="hidden">
+      <label for="n-pass">Nouveau mot de passe</label>
+      <input id="n-pass" type="password" autocomplete="new-password" minlength="8" required>
+      <button class="btn wide" type="submit">Enregistrer</button>
+    </form>
+
+    <div id="auth-msg" class="msg hidden"></div>
+  </div>
+</section>
+
+<!-- ═══════════ APP ═══════════ -->
+<section id="app" class="hidden">
+  <header><div class="bar">
+    <div class="brand"><div class="logo">Q</div><div><b>Quantum CRM</b><span>Leads du site</span></div></div>
+    <span class="who" id="who"></span>
+    <button class="btn ghost sm" id="b-refresh" title="Actualiser">↻ Actualiser</button>
+    <button class="btn ghost sm" id="b-export">⬇ CSV</button>
+    <button class="btn ghost sm" id="b-logout">Déconnexion</button>
+  </div></header>
+
+  <main>
+    <div class="kpis">
+      <div class="kpi"><small>Total leads</small><b id="k-total">–</b></div>
+      <div class="kpi gold"><small>À traiter (nouveaux)</small><b id="k-new">–</b></div>
+      <div class="kpi"><small>7 derniers jours</small><b id="k-week">–</b></div>
+      <div class="kpi"><small>Relances en retard</small><b id="k-late">–</b></div>
+      <div class="kpi"><small>Conclus</small><b id="k-closed">–</b></div>
+    </div>
+
+    <div class="pipe" id="pipe"></div>
+
+    <div class="filters">
+      <input id="q" type="search" placeholder="Rechercher : nom, e-mail, téléphone, message…">
+      <select id="f-country"><option value="">Tous les pays</option><option>LV</option><option>LT</option><option>EE</option><option>FR</option><option value="—">Autre / inconnu</option></select>
+      <select id="f-source"><option value="">Toutes les sources</option></select>
+      <select id="f-agent"><option value="">Tous les agents</option><option value="__none">Non attribué</option></select>
+      <select id="f-period"><option value="">Toute la période</option><option value="7">7 jours</option><option value="30">30 jours</option><option value="90">90 jours</option></select>
+      <button class="btn ghost sm" id="b-clear">Effacer</button>
+    </div>
+
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Date</th><th>Contact</th><th>Pays</th><th>Source</th><th>Intérêt</th><th>Statut</th><th>Agent</th><th>Relance</th></tr></thead>
+        <tbody id="rows"></tbody>
+      </table>
+      <div id="empty" class="empty hidden">Aucun lead ne correspond aux filtres.</div>
+    </div>
+  </main>
+</section>
+
+<!-- ═══════════ LEAD DRAWER ═══════════ -->
+<div id="shade" class="shade hidden"></div>
+<aside id="drawer" class="drawer hidden" aria-label="Fiche lead">
+  <div class="dhead">
+    <div><h2 id="d-name"></h2><div class="sub" id="d-date" style="color:var(--stone);font-size:13px"></div></div>
+    <button class="x" id="d-close" aria-label="Fermer">×</button>
+  </div>
+  <div class="actions" id="d-actions"></div>
+  <dl class="facts" id="d-facts"></dl>
+  <label>Message</label>
+  <div class="message" id="d-message"></div>
+
+  <form id="d-form">
+    <div class="grid2">
+      <div><label for="d-status">Statut</label>
+        <select id="d-status"><option value="new">Nouveau</option><option value="contacted">Contacté</option><option value="qualified">Qualifié</option><option value="closed">Conclu</option></select></div>
+      <div><label for="d-agent">Agent</label>
+        <input id="d-agent" list="agents" maxlength="100" placeholder="ex : Georges"></div>
+    </div>
+    <datalist id="agents"><option>Georges</option><option>Riga</option><option>Vilnius</option><option>Tallinn</option><option>Paris</option></datalist>
+    <label for="d-follow">Date de relance</label>
+    <input id="d-follow" type="date">
+    <label for="d-notes">Notes internes</label>
+    <textarea id="d-notes" maxlength="10000" placeholder="Appel le…, budget, biens proposés, prochaine étape…"></textarea>
+    <button class="btn wide" type="submit" id="d-save">Enregistrer</button>
+  </form>
+</aside>
+
+<div id="toast" class="toast hidden"></div>
+
+<script>
+/* ── Configuration (même projet Supabase que le site) ── */
+var SUPABASE_URL = 'https://ufhdzvorkhlbpunubenv.supabase.co';
+var SUPABASE_KEY = 'sb_publishable_C99NzUhFyEescgzDBE6P_A_kv_YfP8x'; // clé publique : les données restent protégées par la connexion
+
+var sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+var LEADS = [], CURRENT = null, TIMER = null;
+var STATUS = { new:'Nouveau', contacted:'Contacté', qualified:'Qualifié', closed:'Conclu' };
+var SOURCES = { 'contact-form':'Formulaire contact', 'property-enquiry':'Demande sur un bien', 'registration':'Inscription',
+  'property-alert':'Alerte biens', 'newsletter':'Newsletter', 'valuation-landing':'Estimation (page)', 'france-enquiry':'Achat en France',
+  'legal-consultation':'Consultation juridique', 'calendly-booking':'RDV Calendly' };
+var FLAGS = { LV:'🇱🇻 LV', LT:'🇱🇹 LT', EE:'🇪🇪 EE', FR:'🇫🇷 FR' };
+
+function $(id){ return document.getElementById(id); }
+function el(tag, txt, cls){ var e=document.createElement(tag); if(txt!=null) e.textContent=txt; if(cls) e.className=cls; return e; }
+function show(id, on){ $(id).classList.toggle('hidden', !on); }
+function toast(t){ var e=$('toast'); e.textContent=t; show('toast',true); clearTimeout(e._t); e._t=setTimeout(function(){show('toast',false);},2200); }
+function authMsg(t, kind){ var m=$('auth-msg'); m.textContent=t; m.className='msg '+(kind||''); show('auth-msg', !!t); }
+function fmtDate(d){ if(!d) return ''; var x=new Date(d); return x.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric'}); }
+function fmtTime(d){ var x=new Date(d); return x.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}); }
+function today(){ var d=new Date(); d.setHours(0,0,0,0); return d; }
+
+function countryOf(l){
+  try { var h=new URL(l.page_url).hostname; var t=h.split('.').pop().toUpperCase();
+        if (FLAGS[t]) return t; } catch(e){}
+  var m={lv:'LV',lt:'LT',et:'EE',fr:'FR'}; return m[l.language] || '—';
+}
+function isLate(l){ return l.follow_up && l.status!=='closed' && new Date(l.follow_up+'T00:00:00') < today(); }
+
+/* ── Auth screens ── */
+function screen(name){
+  ['f-login','f-signup','f-reset','f-newpass'].forEach(function(f){ show(f, f===name); });
+  authMsg('');
+}
+$('go-signup').onclick=function(){ screen('f-signup'); };
+$('go-reset').onclick=function(){ screen('f-reset'); };
+document.querySelectorAll('.go-login').forEach(function(b){ b.onclick=function(){ screen('f-login'); }; });
+
+$('f-login').onsubmit=async function(e){
+  e.preventDefault(); authMsg('Connexion…');
+  var r = await sb.auth.signInWithPassword({ email:$('l-email').value.trim(), password:$('l-pass').value });
+  if (r.error) {
+    authMsg(/confirm/i.test(r.error.message) ? 'Confirme d’abord ton e-mail (lien reçu dans ta boîte), puis réessaie.'
+          : 'E-mail ou mot de passe incorrect.', 'err');
+    return;
+  }
+  start();
+};
+$('f-signup').onsubmit=async function(e){
+  e.preventDefault(); authMsg('Création…');
+  var r = await sb.auth.signUp({ email:$('s-email').value.trim(), password:$('s-pass').value,
+    options:{ emailRedirectTo: location.origin + location.pathname } });
+  if (r.error) { authMsg(r.error.message, 'err'); return; }
+  if (r.data && r.data.session) { start(); return; }
+  authMsg('C’est fait ! Ouvre l’e-mail de confirmation, clique sur le lien, puis connecte-toi ici.', 'ok');
+};
+$('f-reset').onsubmit=async function(e){
+  e.preventDefault();
+  var r = await sb.auth.resetPasswordForEmail($('r-email').value.trim(), { redirectTo: location.origin + location.pathname });
+  authMsg(r.error ? r.error.message : 'E-mail envoyé. Clique sur le lien reçu pour choisir un nouveau mot de passe.', r.error?'err':'ok');
+};
+$('f-newpass').onsubmit=async function(e){
+  e.preventDefault();
+  var r = await sb.auth.updateUser({ password:$('n-pass').value });
+  if (r.error) { authMsg(r.error.message,'err'); return; }
+  authMsg('Mot de passe enregistré.','ok'); setTimeout(start, 800);
+};
+$('b-logout').onclick=async function(){ clearInterval(TIMER); await sb.auth.signOut(); location.reload(); };
+
+sb.auth.onAuthStateChange(function(event){
+  if (event === 'PASSWORD_RECOVERY') { show('app',false); show('auth',true); screen('f-newpass'); }
+});
+
+/* ── Start: check admin rights, then load ── */
+async function start(){
+  var s = (await sb.auth.getSession()).data.session;
+  if (!s) { show('app',false); show('auth',true); return; }
+  var adm = await sb.rpc('is_crm_admin');
+  if (adm.error || adm.data !== true) {
+    show('app',false); show('auth',true); screen('f-login');
+    authMsg('Ce compte n’a pas accès au CRM. Demande à l’administrateur de t’ajouter.', 'err');
+    await sb.auth.signOut(); return;
+  }
+  $('who').textContent = s.user.email;
+  show('auth',false); show('app',true);
+  await load();
+  clearInterval(TIMER); TIMER = setInterval(function(){ if(!document.hidden && $('drawer').classList.contains('hidden')) load(true); }, 60000);
+}
+
+async function load(silent){
+  var r = await sb.from('leads').select('*').order('created_at', { ascending:false }).limit(2000);
+  if (r.error) { toast('Erreur de chargement'); return; }
+  LEADS = r.data || [];
+  fillFilters(); render();
+  if (!silent) toast(LEADS.length + ' leads chargés');
+}
+
+/* ── Filters ── */
+function fillFilters(){
+  var src=$('f-source'), keep=src.value, seen={};
+  LEADS.forEach(function(l){ if(l.source) seen[l.source]=1; });
+  src.length=1; Object.keys(seen).sort().forEach(function(k){ var o=el('option', SOURCES[k]||k); o.value=k; src.appendChild(o); });
+  src.value=keep;
+  var ag=$('f-agent'), keepA=ag.value, agents={};
+  LEADS.forEach(function(l){ if(l.assigned_to) agents[l.assigned_to]=1; });
+  ag.length=2; Object.keys(agents).sort().forEach(function(k){ var o=el('option', k); o.value=k; ag.appendChild(o); });
+  ag.value=keepA;
+}
+var PIPE = '';
+function filtered(){
+  var q=$('q').value.trim().toLowerCase(), c=$('f-country').value, s=$('f-source').value, a=$('f-agent').value, p=+$('f-period').value;
+  var since = p ? Date.now() - p*864e5 : 0;
+  return LEADS.filter(function(l){
+    if (PIPE && l.status!==PIPE) return false;
+    if (c && countryOf(l)!==c) return false;
+    if (s && l.source!==s) return false;
+    if (a==='__none' && l.assigned_to) return false;
+    if (a && a!=='__none' && l.assigned_to!==a) return false;
+    if (since && new Date(l.created_at).getTime() < since) return false;
+    if (q) { var hay=[l.name,l.email,l.phone,l.message,l.notes,l.interest].join(' ').toLowerCase(); if (hay.indexOf(q)===-1) return false; }
+    return true;
+  });
+}
+['q','f-country','f-source','f-agent','f-period'].forEach(function(id){ $(id).addEventListener('input', render); });
+$('b-clear').onclick=function(){ ['q','f-country','f-source','f-agent','f-period'].forEach(function(id){ $(id).value=''; }); PIPE=''; render(); };
+$('b-refresh').onclick=function(){ load(); };
+
+/* ── Render ── */
+function render(){
+  var wk = Date.now()-7*864e5;
+  $('k-total').textContent = LEADS.length;
+  $('k-new').textContent = LEADS.filter(function(l){return l.status==='new';}).length;
+  $('k-week').textContent = LEADS.filter(function(l){return new Date(l.created_at).getTime()>wk;}).length;
+  $('k-late').textContent = LEADS.filter(isLate).length;
+  $('k-closed').textContent = LEADS.filter(function(l){return l.status==='closed';}).length;
+
+  var pipe=$('pipe'); pipe.innerHTML='';
+  [['','Tous',LEADS.length]].concat(Object.keys(STATUS).map(function(k){ return [k, STATUS[k], LEADS.filter(function(l){return l.status===k;}).length]; }))
+    .forEach(function(x){ var b=el('button', x[1], 'chip'+(PIPE===x[0]?' on':'')); var i=el('i', x[2]); b.appendChild(i);
+      b.onclick=function(){ PIPE=x[0]; render(); }; pipe.appendChild(b); });
+
+  var list=filtered(), tb=$('rows'); tb.innerHTML='';
+  show('empty', list.length===0);
+  list.forEach(function(l){
+    var tr=el('tr',null,'row'); tr.onclick=function(){ openLead(l.id); };
+    var td=el('td'); td.appendChild(el('div', fmtDate(l.created_at))); td.appendChild(el('div', fmtTime(l.created_at), 'sub')); tr.appendChild(td);
+    td=el('td'); td.appendChild(el('div', l.name || '(sans nom)')); td.appendChild(el('div', [l.email,l.phone].filter(Boolean).join(' · '), 'sub')); tr.appendChild(td);
+    var c=countryOf(l); td=el('td'); td.appendChild(el('span', FLAGS[c]||c, 'flag')); tr.appendChild(td);
+    tr.appendChild(el('td', SOURCES[l.source]||l.source||''));
+    tr.appendChild(el('td', l.interest||''));
+    td=el('td'); td.appendChild(el('span', STATUS[l.status]||l.status, 'pill s-'+l.status)); tr.appendChild(td);
+    tr.appendChild(el('td', l.assigned_to||'—'));
+    td=el('td', l.follow_up?fmtDate(l.follow_up):'—', isLate(l)?'late':''); tr.appendChild(td);
+    tb.appendChild(tr);
+  });
+}
+
+/* ── Lead drawer ── */
+function openLead(id){
+  var l = LEADS.find(function(x){return x.id===id;}); if(!l) return; CURRENT=l;
+  $('d-name').textContent = l.name || '(sans nom)';
+  $('d-date').textContent = 'Reçu le ' + fmtDate(l.created_at) + ' à ' + fmtTime(l.created_at);
+  var acts=$('d-actions'); acts.innerHTML='';
+  function act(txt, href){ var a=el('a', txt, 'btn ghost sm'); a.href=href; a.target='_blank'; a.rel='noopener'; acts.appendChild(a); }
+  if (l.email) act('✉ E-mail', 'mailto:'+encodeURIComponent(l.email)+'?subject='+encodeURIComponent('Quantum Real Estate — votre demande'));
+  var digits=(l.phone||'').replace(/[^\d]/g,'');
+  if (digits.length>=7) { act('WhatsApp', 'https://wa.me/'+digits); act('☎ Appeler', 'tel:+'+digits); }
+
+  var f=$('d-facts'); f.innerHTML='';
+  [['E-mail',l.email],['Téléphone',l.phone],['Pays',FLAGS[countryOf(l)]||countryOf(l)],['Langue',l.language],
+   ['Source',SOURCES[l.source]||l.source],['Intérêt',l.interest],['Page',l.page_url],['Mis à jour',l.updated_at?fmtDate(l.updated_at)+' '+fmtTime(l.updated_at):'']]
+   .forEach(function(x){ if(!x[1]) return; f.appendChild(el('dt',x[0])); f.appendChild(el('dd',x[1])); });
+  $('d-message').textContent = l.message || '—';
+  $('d-status').value = l.status; $('d-agent').value = l.assigned_to||''; $('d-follow').value = l.follow_up||''; $('d-notes').value = l.notes||'';
+  show('shade',true); show('drawer',true);
+}
+function closeLead(){ show('shade',false); show('drawer',false); CURRENT=null; }
+$('d-close').onclick=closeLead; $('shade').onclick=closeLead;
+document.addEventListener('keydown', function(e){ if(e.key==='Escape') closeLead(); });
+
+$('d-form').onsubmit=async function(e){
+  e.preventDefault(); if(!CURRENT) return;
+  var b=$('d-save'); b.disabled=true; b.textContent='Enregistrement…';
+  var patch = { status:$('d-status').value, assigned_to:$('d-agent').value.trim()||null,
+                follow_up:$('d-follow').value||null, notes:$('d-notes').value.trim()||null };
+  var r = await sb.from('leads').update(patch).eq('id', CURRENT.id).select().single();
+  b.disabled=false; b.textContent='Enregistrer';
+  if (r.error) { toast('Erreur : non enregistré'); return; }
+  var i = LEADS.findIndex(function(x){return x.id===CURRENT.id;}); LEADS[i]=r.data;
+  fillFilters(); render(); closeLead(); toast('Lead mis à jour ✓');
+};
+
+/* ── CSV export (filtered list) ── */
+$('b-export').onclick=function(){
+  var cols=['created_at','name','email','phone','country','language','source','interest','status','assigned_to','follow_up','notes','message','page_url'];
+  function cell(v){ v=(v==null?'':String(v)); if(/^[=+\-@]/.test(v)) v="'"+v; return '"'+v.replace(/"/g,'""')+'"'; }
+  var lines=[cols.join(';')].concat(filtered().map(function(l){ return cols.map(function(c){ return cell(c==='country'?countryOf(l):l[c]); }).join(';'); }));
+  var blob=new Blob(['﻿'+lines.join('\n')],{type:'text/csv;charset=utf-8'});
+  var a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='quantum-leads-'+new Date().toISOString().slice(0,10)+'.csv'; a.click();
+};
+
+start();
+</script>
+</body>
+</html>
